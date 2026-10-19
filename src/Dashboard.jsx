@@ -8,6 +8,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
+import { USD_TO_INR, formatINR } from "./currency.js";
 
 function Dashboard() {
     const [orders, setOrders] = useState([]);
@@ -23,13 +24,12 @@ function Dashboard() {
             });
     }, []);
 
-    // Months in order
     const months = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
 
-    // Calculate total sales for each month
+    // Total sales per month, in rupees
     const monthlyData = months.map((month) => {
         const total = orders
             .filter((order) => {
@@ -37,8 +37,8 @@ function Dashboard() {
                 return order.orderedAt.startsWith(month);
             })
             .reduce((sum, order) => {
-                const amount = parseFloat(String(order.amount).replace(/[$,]/g, ""));
-                return sum + (isNaN(amount) ? 0 : amount);
+                const amount = parseFloat(String(order.amount).replace(/[$,₹]/g, ""));
+                return sum + (isNaN(amount) ? 0 : amount * USD_TO_INR);
             }, 0);
 
         return {
@@ -56,10 +56,8 @@ function Dashboard() {
                     <LineChart data={monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip
-                            formatter={(value) => [`$${Number(value).toFixed(2)}`, "Sales"]}
-                        />
+                        <YAxis tickFormatter={(value) => `₹${value.toLocaleString("en-IN")}`} />
+                        <Tooltip formatter={(value) => [formatINR(value), "Sales"]} />
                         <Line
                             type="monotone"
                             dataKey="amount"

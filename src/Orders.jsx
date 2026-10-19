@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { USD_TO_INR, formatINR } from './currency.js'
 
 function Orders() {
     const [orders, setOrders] = useState([])
@@ -16,8 +17,9 @@ function Orders() {
             .catch((error) => console.error('Error fetching orders:', error))
     }, [])
 
+    // Amount converted to rupees
     const getAmount = (order) =>
-        parseFloat(String(order.amount).replace(/[$,]/g, '')) || 0
+        (parseFloat(String(order.amount).replace(/[$,₹]/g, '')) || 0) * USD_TO_INR
 
     const filteredOrders = orders.filter((order) => {
         const statusMatch = filter === 'All' || order.status === filter
@@ -49,9 +51,9 @@ function Orders() {
       <div style="padding:24px">
         <h2 style="color:#d84315">Order Summary</h2>
         <p><strong>Total orders:</strong> ${filteredOrders.length}</p>
-        <p><strong>Total order value:</strong> $${totalAmount.toFixed(2)}</p>
+        <p><strong>Total order value:</strong> ${formatINR(totalAmount)}</p>
         <p><strong>Top customer:</strong> ${topCustomer
-            ? `${topCustomer.name} ($${topCustomer.amount.toFixed(2)})`
+            ? `${topCustomer.name} (${formatINR(topCustomer.amount)})`
             : 'No orders'
         }</p>
         <h2 style="color:#d84315">Order Details</h2>
@@ -69,7 +71,7 @@ function Orders() {
               <tr>
                 <td style="padding:10px;border:1px solid #ddd">${order.order}</td>
                 <td style="padding:10px;border:1px solid #ddd">${order.customer}</td>
-                <td style="padding:10px;border:1px solid #ddd">${order.amount}</td>
+                <td style="padding:10px;border:1px solid #ddd">${formatINR(getAmount(order))}</td>
                 <td style="padding:10px;border:1px solid #ddd">${order.status}</td>
               </tr>
             `).join('')}
@@ -85,10 +87,10 @@ function Orders() {
         const body = encodeURIComponent(
             `Storekeeper Digest\n\n` +
             `Total orders: ${filteredOrders.length}\n` +
-            `Total order value: $${totalAmount.toFixed(2)}\n` +
+            `Total order value: ${formatINR(totalAmount)}\n` +
             `Top customer: ${topCustomer?.name || 'No orders'}\n\n` +
             filteredOrders.map((order) =>
-                `Order ${order.order} | ${order.customer} | ${order.amount} | ${order.status}`
+                `Order ${order.order} | ${order.customer} | ${formatINR(getAmount(order))} | ${order.status}`
             ).join('\n')
         )
 
@@ -114,7 +116,7 @@ function Orders() {
                 <input
                     type="number"
                     min="0"
-                    placeholder="Filter by amount"
+                    placeholder="Filter by amount (₹)"
                     value={amountFilter}
                     onChange={(event) => setAmountFilter(event.target.value)}
                 />
@@ -122,7 +124,7 @@ function Orders() {
 
             {topCustomer && (
                 <p className="top-customer">
-                    Top customer: {topCustomer.name} — ${topCustomer.amount.toFixed(2)}
+                    Top customer: {topCustomer.name} — {formatINR(topCustomer.amount)}
                 </p>
             )}
 
@@ -165,7 +167,7 @@ function Orders() {
                             <td>{order.customer}</td>
                             <td>{order.orderedAt}</td>
                             <td>{order.products}</td>
-                            <td>{order.amount}</td>
+                            <td>{formatINR(getAmount(order))}</td>
                             <td>{order.payment}</td>
                             <td>{order.status}</td>
                         </tr>
